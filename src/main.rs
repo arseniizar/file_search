@@ -1,27 +1,19 @@
-use file_search::{cli, web};
-use std::io::{self, Write};
+use file_search::{database, indexing, web};
 
 #[tokio::main]
 async fn main() {
-    println!("Choose an option:");
-    println!("1) Run CLI");
-    println!("2) Run Web Server");
-    print!("Your choice: ");
-    io::stdout().flush().unwrap();
+    let db_path = "file_index.db";
 
-    let mut choice = String::new();
-    io::stdin().read_line(&mut choice).unwrap();
-    let choice = choice.trim();
+    let conn = database::setup(db_path).expect("Failed to connect to the database");
 
-    match choice {
-        "1" => {
-            cli::run();
-        }
-        "2" => {
-            web::start().await;
-        }
-        _ => {
-            println!("Invalid choice. Exiting.");
-        }
-    }
+    database::insert_file_metadata(&conn, "/example.txt", "example.txt" , "1672531200")
+        .expect("Failed to insert file metadata");
+
+    let index_path = "./tantivy_index";
+    let index = indexing::create_index(index_path);
+    indexing::index_files("./sample_directory", &conn, &index)
+        .expect("Failed to index files");
+
+    println!("Server running at http://127.0.0.1:3030/");
+    web::start_server(conn).await;
 }
