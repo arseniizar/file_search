@@ -6,7 +6,7 @@ async fn main() {
 
     let conn = database::setup(db_path).expect("Failed to connect to the database");
 
-    database::insert_file_metadata(&conn, "/example.txt", "example.txt" , "1672531200")
+    database::insert_file_metadata_if_not_exists(&conn, "/example.txt", "example.txt" , "1672531200")
         .expect("Failed to insert file metadata");
 
     let index_path = "./tantivy_index";
